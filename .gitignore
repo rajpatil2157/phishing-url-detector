@@ -1,0 +1,32 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*.log
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Datasets and archives
+ML/dataset/
+*.zip
+
+# Ignore ML experiments and training scripts by default
+ML/*
+!ML/models/
+ML/models/*
+!ML/models/phishing_validation_model.joblib
+
+# Backups
+app_backup*.py
+
+# Secrets
+.env
+.env.*
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Phishing URL Detector</title>
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>🛡️ Phishing URL Detector</h1>
+
+      <p class="subtitle">Analyze a URL for common phishing indicators</p>
+
+      <form method="POST">
+        <input
+          type="text"
+          name="url"
+          placeholder="Enter URL, e.g. https://example.com"
+          required
+        />
+
+        <button type="submit">Analyze URL</button>
+      </form>
+
+      {% if result %} {% if result.error %}
+
+      <div class="error-box">❌ {{ result.error }}</div>
+
+      {% else %} {% set high_count = result.findings | selectattr("severity",
+      "equalto", "HIGH") | list | length %} {% set medium_count =
+      result.findings | selectattr("severity", "equalto", "MEDIUM") | list |
+      length %} {% set low_count = result.findings | selectattr("severity",
+      "equalto", "LOW") | list | length %}
+
+      <div class="result">
+        <h2>Analysis Result</h2>
+
+        <p>
+          <strong>URL:</strong>
+          {{ result.url }}
+        </p>
+
+        <p>
+          <strong>Risk Score:</strong>
+          {{ result.score }}/100
+        </p>
+
+        <p>
+          <strong>Risk Level:</strong>
+          {{ result.risk }}
+        </p>
+        <div class="risk-section">
+          <div class="risk-score">
+            <div class="score-number">{{ result.score }}</div>
+
+            <div class="score-total">/100</div>
+          </div>
+
+          <div class="risk-details">
+            <div class="risk-label">RISK LEVEL</div>
+
+            <div class="risk-level {{ result.risk|lower }}">
+              {{ result.risk }}
+            </div>
+
+            <div class="risk-bar">
+              <div
+                class="risk-progress {{ result.risk|lower }}"
+                style="width: {{ result.score }}%;"
+              ></div>
+            </div>
+          </div>
+        </div>
+        <!-- SECURITY STATISTICS -->
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-title">TOTAL FINDINGS</div>
+            <div class="stat-number">{{ result.findings|length }}</div>
+          </div>
+
+          <div class="stat-card high-stat">
+            <div class="stat-title">HIGH RISK</div>
+            <div class="stat-number">{{ high_count }}</div>
+          </div>
+
+          <div class="stat-card medium-stat">
+            <div class="stat-title">MEDIUM RISK</div>
+            <div class="stat-number">{{ medium_count }}</div>
+          </div>
+
+          <div class="stat-card low-stat">
+            <div class="stat-title">LOW RISK</div>
+            <div class="stat-number">{{ low_count }}</div>
+          </div>
+        </div>
+        <!-- URL Feature Analysis -->
+        <div class="feature-analysis">
+          <h3>URL Feature Analysis</h3>
+          <p class="feature-subtitle">
+            Detailed characteristics extracted from the submitted URL
+          </p>
+
+          <div class="feature-grid">
+            <div class="feature-card">
+              <span class="feature-name">HTTPS</span>
+              <span
+                class="feature-value {% if result.features.https %}safe{% else %}danger{% endif %}"
+              >
+                {% if result.features.https %}✓ Enabled{% else %}✗ Not Used{%
+                endif %}
+              </span>
+            </div>
+
+            <div class="feature-card">
+              <span class="feature-name">IP Address</span>
+              <span
+                class="feature-value {% if result.features.ip_address %}danger{% else %}safe{% endif %}"
+              >
+                {% if result.features.ip_address %}⚠ Detected{% else %}✓ No{%
+                endif %}
+              </span>
+            </div>
+
+            <div class="feature-card">
+              <span class="feature-name">URL Length</span>
+              <span class="feature-value">
+                {{ result.features.url_length }} characters
+              </span>
+            </div>
+
+            <div class="feature-card">
+              <span class="feature-name">Hostname Length</span>
+              <span class="feature-value">
+                {{ result.features.hostname_length }} characters
+              </span>
+            </div>
+
+            <div class="feature-card">
+              <span class="feature-name">Domain Components</span>
+              <span class="feature-value">
+                {{ result.features.domain_components }}
+              </span>
+            </div>
+
+            <div class="feature-card">
+              <span class="feature-name">Suspicious Keywords</span>
+              <span
+                class="feature-value {% if result.features.suspicious_keywords|length > 0 %}danger{% else %}safe{% endif %}"
+              >
+                {{ result.features.suspicious_keywords|length }} detected
+              </span>
+            </div>
+
+            <div class="feature-card">
+              <span class="feature-name">Punycode</span>
+              <span
+                class="feature-value {% if result.features.punycode %}danger{% else %}safe{% endif %}"
+              >
+                {% if result.features.punycode %}⚠ Detected{% else %}✓ No{%
+                endif %}
+              </span>
+            </div>
+
+            <div class="feature-card">
+              <span class="feature-name">Hyphens</span>
+              <span class="feature-value"> {{ result.features.hyphens }} </span>
+            </div>
+
+            <div class="feature-card">
+              <span class="feature-name">Digit Ratio</span>
+              <span class="feature-value">
+                {{ "%.1f"|format(result.features.digit_ratio * 100) }}%
+              </span>
+            </div>
+
+            <div class="feature-card">
+              <span class="feature-name">Hyphen Ratio</span>
+              <span class="feature-value">
+                {{ "%.1f"|format(result.features.hyphen_ratio * 100) }}%
+              </span>
+            </div>
+
+            <div class="feature-card">
+              <span class="feature-name">TLD</span>
+              <span class="feature-value"> .{{ result.features.tld }} </span>
+            </div>
+
+            <div class="feature-card">
+              <span class="feature-name">URL Shortener</span>
+              <span
+                class="feature-value {% if result.features.url_shortener %}danger{% else %}safe{% endif %}"
+              >
+                {% if result.features.url_shortener %}⚠ Detected{% else %}✓ No{%
+                endif %}
+              </span>
+            </div>
+
+            <div class="feature-card">
+              <span class="feature-name">Percent Encoding</span>
+              <span
+                class="feature-value {% if result.features.percent_encoding %}danger{% else %}safe{% endif %}"
+              >
+                {% if result.features.percent_encoding %}⚠ Detected{% else %}✓
+                No{% endif %}
+              </span>
+            </div>
+
+            <div class="feature-card">
+              <span class="feature-name">Double Slash</span>
+              <span
+                class="feature-value {% if result.features.double_slash %}danger{% else %}safe{% endif %}"
+              >
+                {% if result.features.double_slash %}⚠ Detected{% else %}✓ No{%
+                endif %}
+              </span>
+            </div>
+
+            <div class="feature-card">
+              <span class="feature-name">Port</span>
+              <span class="feature-value">
+                {% if result.features.port %} {{ result.features.port }} {% else
+                %} Default {% endif %}
+              </span>
+            </div>
+
+            <div class="feature-card">
+              <span class="feature-name">Suspicious Parameters</span>
+              <span
+                class="feature-value {% if result.features.suspicious_parameters|length > 0 %}danger{% else %}safe{% endif %}"
+              >
+                {{ result.features.suspicious_parameters|length }} detected
+              </span>
+            </div>
+
+            <div class="feature-card">
+              <span class="feature-name">Hostname Entropy</span>
+              <span class="feature-value">
+                {{ "%.2f"|format(result.features.entropy) }}
+              </span>
+            </div>
+
+            <div class="feature-card">
+              <span class="feature-name">Decoded URL Analysis</span>
+              <span
+                class="feature-value {% if result.features.decoded_analysis %}warning-text{% else %}safe{% endif %}"
+              >
+                {% if result.features.decoded_analysis %} ⚠ Encoded Content {%
+                else %} ✓ Normal {% endif %}
+              </span>
+            </div>
+          </div>
+        </div>
+        <!-- Detection Statistics -->
+        <div class="chart-section">
+          <h3>Detection Statistics</h3>
+          <p class="chart-subtitle">
+            Distribution of security findings detected in the URL
+          </p>
+
+          <div class="chart-container">
+            <canvas id="findingsChart"></canvas>
+          </div>
+          <div class="chart-container category-chart">
+            <canvas id="categoryChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Analysis Summary -->
+
+        <div class="summary-box">
+          <h3>Analysis Summary</h3>
+
+          {% if result.risk == "HIGH" %}
+
+          <p>
+            ⚠️ This URL contains multiple indicators commonly associated with
+            suspicious or potentially malicious URLs.
+          </p>
+
+          {% elif result.risk == "MEDIUM" %}
+
+          <p>
+            ⚠️ This URL contains some characteristics that deserve additional
+            investigation.
+          </p>
+
+          {% else %}
+
+          <p>
+            ✅ No major suspicious indicators were detected by the current
+            static analysis rules.
+          </p>
+
+          {% endif %}
+        </div>
+      
+       
+<!-- Machine Learning Prediction -->
+{% if result.ml_prediction is defined %}
+<div class="summary-box">
+    <h3>Machine Learning Prediction</h3>
+
+    <p>
+        <strong>Prediction:</strong>
+        {{ result.ml_prediction }}
+    </p>
+
+    <p>
+        <strong>Model Confidence:</strong>
+        {{ result.ml_confidence }}%
+    </p>
+
+    <p>
+        <strong>Rule-Based Risk:</strong>
+        {{ result.risk }}
+    </p>
+</div>
+{% endif %}
+<!-- Combined Security Assessment -->
+
+{% if result.combined_status is defined %}
+
+<div class="summary-box combined-assessment
+{% if result.agreement_type == 'agree_phishing' %} combined-high
+{% elif result.agreement_type in ['disagreement', 'review'] %} combined-review
+{% else %} combined-lower
+{% endif %}">
+
+    <h3>Combined Security Assessment</h3>
+
+    <p>
+        <strong>Overall Assessment:</strong>
+        <span>{{ result.combined_status }}</span>
+    </p>
+
+    <p>
+        <strong>Rule-Based Risk:</strong>
+        {{ result.risk }} (Score: {{ result.score }}/100)
+    </p>
+
+    <p>
+        <strong>ML Prediction:</strong>
+        {{ result.ml_prediction }}
+        (Confidence: {{ result.ml_confidence }}%)
+    </p>
+
+    <p>
+        <strong>Detector Comparison:</strong>
+        {{ result.agreement }}
+    </p>
+</div>
+{% endif %}
+
+ <!-- Security Findings -->
+
+        <h3>Security Findings</h3>
+
+        <div class="findings">
+          {% for finding in result.findings %}
+
+          <div class="finding {{ finding.severity|lower }}">
+            <div class="finding-header">
+              <strong> {{ finding.severity }} </strong>
+
+              <span> +{{ finding.score }} </span>
+            </div>
+
+            <div class="finding-message">{{ finding.message }}</div>
+          </div>
+
+          {% endfor %}
+        </div>
+
+        <!-- URL Information -->
+
+        <h3>URL Information</h3>
+
+        <p>
+          <strong>Protocol:</strong>
+          {{ result.parsed.scheme }}
+        </p>
+
+        <p>
+          <strong>Hostname:</strong>
+          {{ result.parsed.hostname }}
+        </p>
+
+        <p>
+          <strong>Path:</strong>
+          {{ result.parsed.path }}
+        </p>
+      </div>
+
+      {% endif %} {% endif %}
+
+      <!-- Warning -->
+
+      <div class="warning">
+        ⚠️ This tool performs static URL analysis. It does not visit or interact
+        with the submitted website.
+      </div>
+    </div>
+    {% if result and not result.error %}
+    <script>
+      window.phishingFindings = {{ result.findings | tojson }};
+      window.phishingFeatures = {{ result.features | tojson }};
+    </script>
+    {% endif %}
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>
