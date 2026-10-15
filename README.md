@@ -1,6 +1,8 @@
 \# Phishing URL Detector
+link :- https://phishing-url-detector-novv.onrender.com/
 
 
+<img width="1920" height="1080" alt="Screenshot 2026-10-15 163835" src="https://github.com/user-attachments/assets/4389bd6c-86ff-4a5a-8a8d-426427b7cdd4" />
 
 A machine-learning-based web application that analyzes URLs to identify potential phishing threats using URL features, rule-based checks, and a trained classification model.
 
